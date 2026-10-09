@@ -5,39 +5,71 @@
 Instruction Set
 
 #Instruction Set
+
 #0:ld => load
+
 #1:st => store
+
 #2:add
+
 #3:sub
+
 #4:mul
+
 #5:div
+
 #6:mod
+
 #7:and
+
 #8:or
+
 #9:not
+
 #10:nand
+
 #11:nor
+
 #12:xor
+
 #13:be => branch if equal (beq RC,RA, (RB)) RB is the destination
+
 #14:bne => branch if not equal
+
 #15:blt => branch if less than
+
 #16:bgt => branch if greater than
+
 #17:sl => shift L
+
 #18:sr => shift R
+
 #19:li => load immdiate into r1
+
 #20:jmp => jump (jump (rc)) jump to rc
+
 #21:mv => move
+
 #22:call (call (ra)) basically jump but keep track of this position
+
 #23:ret
 
 Registers
+
 0: zero (always holds zero) => zero // Restricted
+
 1: load reg => r1// Restricted
+
 2: argument 0 / return value => r2
+
 3: argument 1 => r3
+
 4: temporary => r4
+
 5: temporary => r5
+
 6: stack pointer (uninitialized by default) => sp //not restricted but important to use safely
+
 7: return address => ra //restricted
 
 important note li DOES NOT TAKE a register as an argument
