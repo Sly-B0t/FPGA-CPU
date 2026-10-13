@@ -1,4 +1,78 @@
-    module top(input wire clk, input wire rx, output wire tx);
+    /*
+    UART CODES
+
+    echo means start
+
+    # means misunderstood command expected start bit
+
+    ! is ack high
+
+    $ is ack low
+
+    */
+
+
+    /*
+    UART transmission for registers and halt/run/step is
+
+    start byte || echo
+    high byte || ACK high
+    low byte || ACK low
+
+    UART transmission for memory is 
+
+    (specifying the instruction)
+    start byte || echo
+    high byte || ACK high
+    low byte || ACK low
+
+    setting memory is special, you have to set the reg youre gonna read/write to first with 0x7 for the top
+    bits then using the last 
+    */
+
+    /* UART INSTRUCTION SET  (3 bits)    || note
+    0x0: 0: read register       || uses uart mem reg
+    0x1: 1: read memory         ||
+    0x3: 2: write register (im not working on this right now just change te memory to set a register then move to that place in memory by changing pc)
+    0x3: 3: write memory
+    0x4: 4: halt
+    0x5: 5: run                 || checks the bit after to see if its 1 to see to step or run indefinitely
+    0x6: 6: set memreg  high     || sets bits 8-16
+    0x7: 7: set memreg  low       || sets bits 1-8
+
+
+    */
+
+
+
+    /*
+    0:load
+    1:store
+    2:add
+    3:sub
+    4:mul
+    5:div
+    6:mod
+    7:and
+    8:or
+    9:not
+    10:nand
+    11:nor
+    12:xor
+    13:branch if equal (beq RC,RA, (RB)) RB is the destination
+    14:branch if not equal
+    15:branch if less than
+    16:branch if greater than
+    17:shift L
+    18:shift R
+    19:load immdiate
+    20:jump (jump (rc)) jump to rc
+    21:move
+    22:call (call (ra)) basically jump but keep track of this position
+    23:ret
+
+    */
+    module top(input wire clk,input wire rst, input wire rx, output wire tx);
         wire [15:0] address;
         wire memread;
         wire memwrite;
@@ -16,11 +90,11 @@
         reg [15:0] uartaddress;
         reg [15:0] uartdataIn;
         wire [15:0] uartdataOut;
-        reg [15:0] uart_read_data;
+        reg [15:0] uart_read_data = 0;
         reg [15:0] uart_write_data = 0;
         reg halt = 1;
         reg step = 0;
-        Processor processor(clk, address,memread,memwrite,memDataIn,memDataOut, regOut, regIn, halt, step);
+        Processor processor(clk,rst, address,memread,memwrite,memDataIn,memDataOut, regOut, regIn, halt, step);
         Memory memory(address,memread,memwrite,memDataIn,clk,memDataOut, uartread,uartwrite,uartaddress,uartdataIn,uartdataOut);
         uart_RX uart_rx(clk, rx,rx_data,rx_done);
         uart_TX uart_tx(clk,tx, tx_data, tx_start,tx_busy);
@@ -29,11 +103,29 @@
         reg [15:0] uart_instruction;    
         reg uart_recieved = 0;
         reg[15:0] uart_mem_reg = 0;
-        always @(posedge clk) begin
+        always @(posedge clk or posedge rst) begin
             tx_start <= 0;
             uartread <= 0;
             uartwrite <= 0;
             step <= 0;
+            if(rst) begin
+                tx_start <= 0;
+                uartread <= 0;
+                uartwrite <= 0;
+                step <= 0;
+                cycle <= 0;
+                uart_state <= 0;
+                halt <= 1;
+                step <= 0;
+                memread <= 0;
+                memwrite <= 0;
+                rx_done <= 0;
+                rx_busy <= 0;
+                tx_busy <= 0;
+                uart_read_data <= 0;
+                uart_write_data <= 0;
+                uart_recieved <= 0;
+            end
             if(rx_done && !tx_busy) begin
                 case(uart_state)
                     0: begin
@@ -235,81 +327,8 @@
             end
         end
     endmodule
-    /*
-    UART CODES
 
-    echo means start
-
-    # means misunderstood command expected start bit
-
-    ! is ack high
-
-    $ is ack low
-
-    */
-
-
-    /*
-    UART transmission for registers and halt/run/step is
-
-    start byte || echo
-    high byte || ACK high
-    low byte || ACK low
-
-    UART transmission for memory is 
-
-    (specifying the instruction)
-    start byte || echo
-    high byte || ACK high
-    low byte || ACK low
-
-    setting memory is special, you have to set the reg youre gonna read/write to first with 0x7 for the top
-    bits then using the last 
-    */
-
-    /* UART INSTRUCTION SET  (3 bits)    || note
-    0x0: 0: read register       || uses uart mem reg
-    0x1: 1: read memory         ||
-    0x3: 2: write register (im not working on this right now just change te memory to set a register then move to that place in memory by changing pc)
-    0x3: 3: write memory
-    0x4: 4: halt
-    0x5: 5: run                 || checks the bit after to see if its 1 to see to step or run indefinitely
-    0x6: 6: set memreg  high     || sets bits 8-16
-    0x7: 7: set memreg  low       || sets bits 1-8
-
-
-    */
-
-
-
-    /*
-    0:load
-    1:store
-    2:add
-    3:sub
-    4:mul
-    5:div
-    6:mod
-    7:and
-    8:or
-    9:not
-    10:nand
-    11:nor
-    12:xor
-    13:branch if equal (beq RC,RA, (RB)) RB is the destination
-    14:branch if not equal
-    15:branch if less than
-    16:branch if greater than
-    17:shift L
-    18:shift R
-    19:load immdiate
-    20:jump (jump (rc)) jump to rc
-    21:move
-    22:call (call (ra)) basically jump but keep track of this position
-    23:ret
-
-    */
-    module Processor(input wire clk,output reg [15:0] address, output reg memread, output reg memwrite,
+    module Processor(input wire clk,input wire rst,output reg [15:0] address, output reg memread, output reg memwrite,
     output reg [15:0] memDataIn, input wire [15:0] memDataOut, output wire[15:0] regOut, input wire [2:0] regIn, input wire halt, input wire stepin);
         reg [2:0] state = 0; // come back for the size
         reg [15:0] IR; // reg C, regB, reg A, op code; reg C = destination
@@ -326,6 +345,30 @@
         assign regOut = registers[regIn];
         //only run on the clk high if we're not stopped or we're stepping
         always @ (posedge clk) begin
+            if(rst) begin
+                state <= 0;
+                PC <= 0;
+                zreg <= 0;
+                nreg <= 0;
+                flagwrite <= 0;
+                registers[0] <= 0;
+                registers[1] <= 0;
+                registers[2] <= 0;
+                registers[3] <= 0;
+                registers[4] <= 0;
+                registers[5] <= 0;
+                registers[6] <= 0;
+                registers[7] <= 0;
+                IR <= 0;
+                RegA <= 0;
+                RegB <= 0;
+                RegC <= 0;
+                zreg <= 0;
+                nreg <= 0;
+                flagwrite <= 0;
+                instruction <= 0;
+                step <= 0;
+            end
             step <= stepin;
             if(!halt || step) begin
                 memread <= 0;
@@ -528,22 +571,16 @@
 
 
 
-    module Memory(
-        input wire [15:0] address,
-        input wire memread,
-        input wire memwrite,
-        input wire [15:0] dataIn,
-        input wire clk,
-        output reg [15:0] dataOut,
-        input wire uartread,
-        input wire uartwrite,
-        input wire [15:0] uartaddress,
-        input wire [15:0] uartdataIn,
-        output reg [15:0] uartdataOut
+    module Memory(input wire [15:0] address,input wire rst ,input wire memread,input wire memwrite,input wire [15:0] dataIn,input wire clk,output reg [15:0] dataOut,input wire uartread,input wire uartwrite,input wire [15:0] uartaddress,input wire [15:0] uartdataIn,output reg [15:0] uartdataOut
     );
         reg [15:0] mem [0:255];
 
         always @(posedge clk) begin
+            if(rst) begin 
+                for(int i = 0; i < 256; i = i + 1) begin
+                    mem[i] <= 0;
+                end
+            end
             if(memwrite) begin
                 mem[address[7:0]] <= dataIn;
                 dataOut <= dataIn;
@@ -562,7 +599,7 @@
         end
     endmodule
 
-    module uart_TX(input wire clk, output reg tx, input wire [7:0] tx_data, input wire tx_start, output wire tx_busy);
+    module uart_TX(input wire clk,input wire rst, output reg tx, input wire [7:0] tx_data, input wire tx_start, output wire tx_busy);
         reg [1:0] state = 0;
         reg [3:0] bit = 0;
         reg [8:0] counter = 0;
@@ -570,6 +607,14 @@
         reg [7:0] tx_buffer;
         assign tx_busy = (state != 0);
         always @(posedge clk) begin 
+            if(rst) begin
+                state <= 0;
+                bit <= 0;
+                counter <= 0;
+                waiting <= 0;
+                tx_buffer <= 0;
+                tx <= 1;
+            end
             case(state)
                 0: begin
                     tx <= 1;
@@ -629,7 +674,7 @@
         end
     endmodule
 
-    module uart_RX(input wire clk, input wire rx, output reg [7:0] rx_data, output reg rx_done);
+    module uart_RX(input wire clk, input wire rst, input wire rx, output reg [7:0] rx_data, output reg rx_done);
         //waiting for the rx to drop from HIGH to LOW then waiting a half cycle and confirm its still low
         //then waiting a whole cycle to get inside the middle of the data bit
         //sample that bit then waiting a cycle do it for 7 more times
@@ -643,6 +688,16 @@
         reg rx_sync1 = 1;
         reg rx_sync2 = 1;
         always @(posedge clk) begin
+            if(rst) begin
+                state <= 0;
+                bit <= 0;
+                counter <= 0;
+                waiting <= 0;
+                rx_buffer <= 0;
+                prevrx <= 1;
+                rx_sync1 <= 1;
+                rx_sync2 <= 1;
+            end
             rx_done<= 0;
             rx_sync1 <= rx;
             rx_sync2 <= rx_sync1;
