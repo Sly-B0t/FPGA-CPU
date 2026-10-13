@@ -1,5 +1,6 @@
 # FPGA-CPU
 ![Block Diagram](Block-Diagram.jpg)
+Technically the IO manager block doesnt exist and is integrated into the top module. Maybe in the future I'll make it its own real module.
 
 16 bit Custom designed Cpu designed for the Tang nano 9k.
 
@@ -74,4 +75,4 @@ then use the python file to communicate with it over the COM ports. create your 
 ```
 ## Note
 
-it only has 32 bytes of memory despite being 16 bit and capacble of accessing more but the fpga is running out of LUTs.
+it only has 32 bytes of memory despite being 16 bit and capable of accessing more but the fpga is running out of LUTs.
