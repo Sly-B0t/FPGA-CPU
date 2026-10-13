@@ -75,4 +75,4 @@ then use the python file to communicate with it over the COM ports. create your 
 ```
 ## Note
 
-it only has 32 bytes of memory despite being 16 bit and capable of accessing more but the fpga is running out of LUTs.
+it only has 512 bytes of memory despite being 16 bit and capable of accessing more but the fpga is running out of LUTs.
