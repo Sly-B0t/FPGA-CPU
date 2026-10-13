@@ -1,4 +1,5 @@
 # FPGA-CPU
+![Block Diagram](Block-Diagram.jpg)
 
 16 bit Custom designed Cpu designed for the Tang nano 9k.
 
@@ -71,4 +72,6 @@ then use the python file to communicate with it over the COM ports. create your 
 #0x7: 7: set memreg  low
 */
 
-it only has 32 bytes of memory despite being 16 bit and capacbl of accessing more but the fpga is running out of LUTs.
+## Note
+
+it only has 32 bytes of memory despite being 16 bit and capacble of accessing more but the fpga is running out of LUTs.

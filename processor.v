@@ -570,7 +570,6 @@
 
 
 
-
     module Memory(input wire [15:0] address,input wire rst ,input wire memread,input wire memwrite,input wire [15:0] dataIn,input wire clk,output reg [15:0] dataOut,input wire uartread,input wire uartwrite,input wire [15:0] uartaddress,input wire [15:0] uartdataIn,output reg [15:0] uartdataOut
     );
         reg [15:0] mem [0:255];
