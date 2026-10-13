@@ -71,7 +71,7 @@ then use the python file to communicate with it over the COM ports. create your 
 #0x6: 6: set memreg  high
 #0x7: 7: set memreg  low
 */
-
+```
 ## Note
 
 it only has 32 bytes of memory despite being 16 bit and capacble of accessing more but the fpga is running out of LUTs.
